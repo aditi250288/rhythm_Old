@@ -4,18 +4,35 @@ const passport = require("passport");
 const Song = require("../models/Song");
 const User = require("../models/User");
 
+// Helper function to escape special characters in regex
+function escapeRegex(text) {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+}
+
+// Helper function for fuzzy search
+function fuzzySearch(text) {
+  const escapedText = escapeRegex(text);
+  return new RegExp(escapedText.split('').join('.*'), 'i');
+}
+
+// Create a new song
 router.post(
   "/create",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     try {
       const { name, thumbnail, track } = req.body;
-      const artist = req.user._id; // Assuming the authenticated user is the artist
+      
+      // Basic input validation
+      if (!name || !thumbnail || !track) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
 
+      const artist = req.user._id;
       const songDetails = { name, thumbnail, track, artist };
       const newSong = await Song.create(songDetails);
 
-      return res.status(201).json(newSong);
+      return res.status(201).json({ data: newSong });
     } catch (error) {
       console.error("Error creating song:", error);
       return res.status(500).json({ error: "Internal server error" });
@@ -23,14 +40,13 @@ router.post(
   }
 );
 
-//get route to get all songs I have published.
+// Get all songs published by the current user
 router.get(
   "/get/MySongs",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     try {
       const currentUser = req.user;
-      // we need to get all songs where artists id == currentUser._id
       const songs = await Song.find({ artist: currentUser._id }).populate("artist");
       return res.status(200).json({ data: songs });
     } catch (error) {
@@ -40,8 +56,7 @@ router.get(
   }
 );
 
-//get routes to get all songs any artist has published
-//I will send the artist id and i want to see all songs that artist has published.
+// Get all songs published by a specific artist
 router.get(
   "/get/artist/:artistId",
   passport.authenticate("jwt", { session: false }),
@@ -49,10 +64,9 @@ router.get(
     const { artistId } = req.params;
 
     try {
-      //we can check if the artist exists or not
       const artist = await User.findById(artistId);
       if (!artist) {
-        return res.status(404).json({ err: "Artist does not exist." });
+        return res.status(404).json({ error: "Artist does not exist" });
       }
 
       const songs = await Song.find({ artist: artistId });
@@ -64,19 +78,30 @@ router.get(
   }
 );
 
-//get route to get a single song by name
+// Get songs by name or artist name (fuzzy search)
 router.get(
-  "/get/songName/:songName",
+  "/search/:query",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const { songName } = req.params;
+    const { query } = req.params;
 
     try {
-      //pattern matching in mongodb check that if time permits
-      const songs = await Song.find({ name: songName });
+      const fuzzyRegex = fuzzySearch(query);
+
+      const songs = await Song.find({
+        $or: [
+          { name: { $regex: fuzzyRegex } },
+          { 'artist.firstName': { $regex: fuzzyRegex } },
+          { 'artist.lastName': { $regex: fuzzyRegex } }
+        ]
+      }).populate({
+        path: 'artist',
+        select: 'firstName lastName'
+      });
+
       return res.status(200).json({ data: songs });
     } catch (error) {
-      console.error("Error fetching songs by name:", error);
+      console.error("Error searching songs:", error);
       return res.status(500).json({ error: "Internal server error" });
     }
   }

@@ -10,6 +10,7 @@ const User = require ("./models/User");
 const authRoutes = require("./routes/auth");
 const songRoutes = require("./routes/Song");
 const playlistRoutes = require("./routes/playlist");
+const spotifyRoutes = require("./routes/Spotify");
 require ("dotenv").config();
 const cors = require("cors");
 const app = express();
@@ -17,6 +18,7 @@ const port = 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use('/api/spotify', spotifyRoutes);
 
 
 //connect mongodb to our node app
