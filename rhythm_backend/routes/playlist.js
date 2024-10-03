@@ -24,6 +24,9 @@ router.post(
             collaborators: [],
         };
         const playlist = await Playlist.create(playlistData);
+
+        const populatedPlaylist = await Playlist.findById(playlist._id).populate('songs');
+
         return res.status(200).json(playlist);
     }
 );
@@ -42,7 +45,7 @@ router.get(
         // This concept is called req.params
         const playlistId = req.params.playlistId;
         // I need to find a playlist with the _id = playlistId
-        const playlist = await Playlist.findOne({_id: playlistId});
+        const playlist = await Playlist.findOne({_id: playlistId}).populate("songs");
         if (!playlist) {
             return res.status(301).json({err: "Invalid ID"});
         }
