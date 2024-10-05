@@ -3,6 +3,7 @@ const router = express.Router();
 const passport = require("passport");
 const Song = require("../models/Song");
 const User = require("../models/User");
+const Playlist = require("../models/Playlist");
 
 // Helper function to escape special characters in regex
 function escapeRegex(text) {
@@ -64,7 +65,7 @@ router.get(
     const { artistId } = req.params;
 
     try {
-      const artist = await User.findById(artistId);
+      const artist = await user.findById(artistId);
       if (!artist) {
         return res.status(404).json({ error: "Artist does not exist" });
       }

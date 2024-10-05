@@ -18,7 +18,7 @@ const Playlist = new mongoose.Schema({
   owner: {
     //need to change this to array later
     type: mongoose.Types.ObjectId,
-    ref: "user",
+    ref: "User",
   },
   // square brackets indicates the array
   songs: [
@@ -31,7 +31,7 @@ const Playlist = new mongoose.Schema({
   collaborators: [
     {
       type: mongoose.Types.ObjectId,
-      ref: "user",
+      ref: "User",
     },
   ],
 

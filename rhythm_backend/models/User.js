@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 // Define the user schema
 const userSchema = new mongoose.Schema({
@@ -6,54 +6,51 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  password:{
-    type: String,
-    required: true,
-    private: true,
-  },
-
-  lastName:{
+  lastName: {
     type: String,
     required: false,
   },
-
   email: {
     type: String,
     required: true,
-    unique: true, // Ensure email is unique
-    lowercase: true // Convert email to lowercase for consistency
+    unique: true,
+    lowercase: true,
+    index: true, // Adding index for optimization
   },
-
   username: {
     type: String,
     required: true,
-    unique: true // Ensure username is unique
+    unique: true,
+    index: true, // Adding index for optimization
   },
-
- /* password: {
+  password: {
     type: String,
-    required: true // Password is required
-  },*/
-
-  likedSongs: {
-    type: [String],
-    default: [] // Initialize as an empty array
+    required: true, // Password is required
   },
-
-  likedPlaylists: {
-    type: [String],
-    default: [] // Initialize as an empty array
-  },
-  
-  subscribedArtists: {
-    type: [String],
-    default: [] // Initialize as an empty array
-  }
+  likedSongs: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Song',
+  }],
+  likedPlaylists: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Playlist',
+  }],
+  subscribedArtists: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Artist',
+  }],
 });
 
+// Remove sensitive information like password from the output
+userSchema.set('toJSON', {
+  transform: function (doc, ret, options) {
+    delete ret.password;
+    return ret;
+  },
+});
 
 // Create the User model
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model('User', userSchema);
 
 // Export the User model
 module.exports = User;

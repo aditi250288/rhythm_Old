@@ -1,100 +1,94 @@
-//npm init : package.json - this is node project.
-//npm i express: express js package install
-
 const express = require("express");
-const mongoose = require ("mongoose");
-const JwtStrategy = require("passport-jwt").Strategy,
-    ExtractJwt = require("passport-jwt").ExtractJwt;
-const passport = require ("passport");
-const User = require ("./models/User");
+const mongoose = require("mongoose");
+const JwtStrategy = require("passport-jwt").Strategy;
+const ExtractJwt = require("passport-jwt").ExtractJwt;
+const passport = require("passport");
+const User = require("./models/User");
 const authRoutes = require("./routes/auth");
 const songRoutes = require("./routes/Song");
 const playlistRoutes = require("./routes/playlist");
 const spotifyRoutes = require("./routes/Spotify");
-require ("dotenv").config();
+require("dotenv").config();
 const cors = require("cors");
+
 const app = express();
 const port = 5000;
 
 const corsOptions = {
     origin: 'http://localhost:3000', // or your frontend URL
     credentials: true,
-  };
-  app.use(cors(corsOptions));
+};
+app.use(cors(corsOptions));
 
-app.use(cors());
 app.use(express.json());
 app.use('/api/spotify', spotifyRoutes);
 
-
-//connect mongodb to our node app
-// mongoose.connect() takes arguments : 1. which db to connect to (db url), 2. connection options
-
-mongoose.connect
-    ("mongodb+srv://aditiapte88:"+ process.env.PWD +"@db.axgi0.mongodb.net/?retryWrites=true&w=majority&appName=Db",
-    {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
+// Connect MongoDB to our node app
+const connectDB = async () => {
+    try {
+        await mongoose.connect(
+            "mongodb+srv://aditiapte88:" + process.env.PWD + "@db.axgi0.mongodb.net/?retryWrites=true&w=majority&appName=Db",
+            {
+                useNewUrlParser: true,
+                useUnifiedTopology: true
+            }
+        );
+        console.log("Connected to MongoDB");
+    } catch (err) {
+        console.error("Error connecting to MongoDB:", err.message);
+        process.exit(1);
     }
-)
+};
 
-.then((x) => {
-    console.log("connected to Mongo")
-})
-.catch(err => {
-    console.error("Error connecting to MongoDB:", err.message);
-
-});
-
-//setup passport-jwt
-
-let opts = {}
+// Setup passport-jwt
+let opts = {};
 opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
-opts.secretOrKey = "thisKeyIsSupposedToBeSecret";
+opts.secretOrKey = process.env.JWT_SECRET || "thisKeyIsSupposedToBeSecret";
 passport.use(new JwtStrategy(opts, function(jwt_payload, done) {
-    
     User.findOne({ _id: jwt_payload.identifier })
-    .then(user => {
-        if (user) {
-            return done(null, user);
-        } else {
-            return done(null, false);
-        }
-    })
-    .catch(err => {
-        return done(err, false);
-    });
-
-    /*OLD CODE User.findOne({_id: jwt_payload.identifier}, function(err, user) {
-        // done(error,doesTheUserExist)
-        if (err) {
+        .then(user => {
+            if (user) {
+                return done(null, user);
+            } else {
+                return done(null, false);
+            }
+        })
+        .catch(err => {
             return done(err, false);
-        }
-        if (user) {
-            return done(null, user);
-        } else {
-            return done(null, false);
-            // or you could create a new account
-        }
-    });*/
+        });
 }));
 
-//API : GET Type : / : return text "Hello world"
-
+// API routes
 app.get("/", (req, res) => {
-    //req - contains all the data for the request
-    //res - contains all the data for response
-
     res.send("Hello World");
-
 });
 
-app.use("/auth", authRoutes);
-app.use("/Song", songRoutes);
-app.use("/playlist", playlistRoutes);
+// Debug logging middleware
+const debugLogger = (routeName) => (req, res, next) => {
+    console.log(`${routeName} route hit:`, req.url);
+    next();
+};
 
-// now we want to tell express that our server will run on localhost:5000
+app.use("/api/auth", debugLogger("Auth"), authRoutes);
+app.use("/api/song", debugLogger("Song"), passport.authenticate('jwt', { session: false }), songRoutes);
+app.use("/api/playlist", debugLogger("Playlist"), passport.authenticate('jwt', { session: false }), playlistRoutes);
 
-app.listen(port, () => {
-    console.log("app is running on port " + port);
-})
+// Global error handler
+app.use((err, req, res, next) => {
+    console.error('Error details:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
+});
+
+// Start the server
+const startServer = async () => {
+    try {
+        await connectDB();
+        app.listen(port, () => {
+            console.log("App is running on port " + port);
+        });
+    } catch (err) {
+        console.error("Failed to start server:", err);
+    }
+};
+
+startServer();
