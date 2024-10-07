@@ -54,7 +54,7 @@ router.get(
 );
 
 // Get all playlists made by the current user
-router.get("/api/playlist/get/me", passport.authenticate("jwt", { session: false }), async (req, res) => {
+router.get("/get/me", passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
         const artistId = req.user._id;
         const playlists = await Playlist.find({ owner: artistId })
@@ -88,7 +88,7 @@ router.get(
 
 // Add a song to a playlist
 router.post(
-    "/api/playlist/add/song",
+    "/add/song",
     passport.authenticate("jwt", { session: false }),
     async (req, res) => {
         try {

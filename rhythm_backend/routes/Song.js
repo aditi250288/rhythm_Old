@@ -42,20 +42,16 @@ router.post(
 );
 
 // Get all songs published by the current user
-router.get(
-  "/get/MySongs",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    try {
-      const currentUser = req.User;
-      const songs = await Song.find({ artist: currentUser._id }).populate("artist");
-      return res.status(200).json({ data: songs });
-    } catch (error) {
-      console.error("Error fetching user's songs:", error);
-      return res.status(500).json({ error: "Internal server error" });
-    }
+router.get("/get/mysongs", passport.authenticate("jwt", { session: false }), async (req, res) => {
+  try {
+    const currentUser = req.user; // Fixed to use `req.user`
+    const songs = await Song.find({ artist: currentUser._id }).populate("artist");
+    return res.status(200).json({ data: songs });
+  } catch (error) {
+    console.error("Error fetching user's songs:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
-);
+});
 
 // Get all songs published by a specific artist
 router.get(
