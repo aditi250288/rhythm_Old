@@ -29,7 +29,7 @@ router.post(
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      const artist = req.user._id;
+      const artist = req.User._id;
       const songDetails = { name, thumbnail, track, artist };
       const newSong = await Song.create(songDetails);
 
@@ -47,7 +47,7 @@ router.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     try {
-      const currentUser = req.user;
+      const currentUser = req.User;
       const songs = await Song.find({ artist: currentUser._id }).populate("artist");
       return res.status(200).json({ data: songs });
     } catch (error) {
@@ -65,7 +65,7 @@ router.get(
     const { artistId } = req.params;
 
     try {
-      const artist = await user.findById(artistId);
+      const artist = await User.findById(artistId);
       if (!artist) {
         return res.status(404).json({ error: "Artist does not exist" });
       }

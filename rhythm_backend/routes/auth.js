@@ -3,8 +3,8 @@ const router = express.Router();
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const { getToken } = require("../utils/helpers");
-const Playlist = require("../routes/playlist");
-const Song = require("../routes/song");
+//const Playlist = require("../routes/playlist");
+//const Song = require("../routes/song");
 
 // Validation function
 const validateUserInput = (data) => {

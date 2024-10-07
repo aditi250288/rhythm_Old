@@ -5,7 +5,7 @@ const ExtractJwt = require("passport-jwt").ExtractJwt;
 const passport = require("passport");
 const User = require("./models/User");
 const authRoutes = require("./routes/auth");
-const songRoutes = require("./routes/Song");
+const songRoutes = require("./routes/song");
 const playlistRoutes = require("./routes/playlist");
 const spotifyRoutes = require("./routes/Spotify");
 require("dotenv").config();
@@ -69,9 +69,9 @@ const debugLogger = (routeName) => (req, res, next) => {
     next();
 };
 
-app.use("/api/auth", debugLogger("Auth"), authRoutes);
-app.use("/api/song", debugLogger("Song"), passport.authenticate('jwt', { session: false }), songRoutes);
-app.use("/api/playlist", debugLogger("Playlist"), passport.authenticate('jwt', { session: false }), playlistRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/song", songRoutes);
+app.use("/api/playlist", playlistRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
